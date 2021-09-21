@@ -5,42 +5,57 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Locale;
 import java.util.Scanner;
+import java.util.concurrent.BlockingQueue;
 
 public class ClientHandler implements Runnable
 {
+
+    Dispatcher dispatcher;
+    BlockingQueue<String> queue;
     Socket client;
     PrintWriter pw;
     Scanner scanner;
 
     public ClientHandler(Socket client) throws IOException
     {
+
+
         this.client = client;
         this.pw = new PrintWriter(client.getOutputStream(), true);
         this.scanner = new Scanner(client.getInputStream());
     }
+
+    public ClientHandler(Socket client, BlockingQueue<String> queue) throws IOException
+    {
+        this.queue = queue;
+        this.client = client;
+        this.pw = new PrintWriter(client.getOutputStream(), true);
+        this.scanner = new Scanner(client.getInputStream());
+
+    }
     //TODO lav ny constructor med den delte besked-kø
 
-    public void protocol() throws IOException
+    public void protocol() throws IOException, InterruptedException
     {
         String msg = "";
-        String action = "";
+        String action;
         pw.println("davs");
 
         while (!msg.equals("CLOSE#"))
         {
-            msg = scanner.nextLine();
             //TODO lav cl md delt ressource
+            msg = scanner.nextLine();
             String[] parts = msg.split("#");
             action = parts[0];
             msg = parts[1];
-            //TODO: split strengene på #
-            //TODO: switch på første del og processe anden del (data).
+
 
             switch (action)
             {
                 case "ALL":
+                    queue.put(msg);
                     //TODO inset besked i delt resusor
-                break;
+                    break;
                 case "UPPER":
                     pw.println(msg.toUpperCase());
                     break;
@@ -69,9 +84,14 @@ public class ClientHandler implements Runnable
                 this.protocol();
             }
 
-        } catch (IOException e)
+        } catch (InterruptedException | IOException e)
         {
             e.printStackTrace();
         }
+    }
+
+    public PrintWriter getPw()
+    {
+        return pw;
     }
 }
