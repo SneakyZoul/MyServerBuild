@@ -6,7 +6,7 @@ import java.net.Socket;
 import java.util.Locale;
 import java.util.Scanner;
 
-public class ClientHandler
+public class ClientHandler implements Runnable
 {
     Socket client;
     PrintWriter pw;
@@ -18,6 +18,7 @@ public class ClientHandler
         this.pw = new PrintWriter(client.getOutputStream(), true);
         this.scanner = new Scanner(client.getInputStream());
     }
+    //TODO lav ny constructor med den delte besked-kø
 
     public void protocol() throws IOException
     {
@@ -28,6 +29,7 @@ public class ClientHandler
         while (!msg.equals("CLOSE#"))
         {
             msg = scanner.nextLine();
+            //TODO lav cl md delt ressource
             String[] parts = msg.split("#");
             action = parts[0];
             msg = parts[1];
@@ -36,6 +38,9 @@ public class ClientHandler
 
             switch (action)
             {
+                case "ALL":
+                    //TODO inset besked i delt resusor
+                break;
                 case "UPPER":
                     pw.println(msg.toUpperCase());
                     break;
@@ -52,5 +57,21 @@ public class ClientHandler
 
         }
         client.close();
+    }
+
+    @Override
+    public void run()
+    {
+        try
+        {
+            while (true)
+            {
+                this.protocol();
+            }
+
+        } catch (IOException e)
+        {
+            e.printStackTrace();
+        }
     }
 }
